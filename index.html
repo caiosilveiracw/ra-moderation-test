@@ -36,7 +36,7 @@
             margin-bottom: 20px;
             border-radius: 4px;
             border: 1px solid #ddd;
-            box-sizing: border-box; /* Added this line to include padding in input width */
+            box-sizing: border-box;
         }
         button {
             background-color: #0056b3;
@@ -60,81 +60,76 @@
     <script>
         class ReclamacaoRA {
             constructor() {
-                this.total_reclamacoes = 0;
-                this.reclamacoes_respondidas = 0;
-                this.reclamacoes_avaliadas = 0; // Novo
+                this.reclamacoes_avaliadas = 0;
                 this.resolvidos = 0;
                 this.soma_notas = 0;
                 this.voltaria_negocio = 0;
             }
-
-            iniciarValoresIniciais(totalReclamacoes, reclamacoesRespondidas, reclamacoesAvaliadas, isAtual, maAtual, inAtual) {
-                this.total_reclamacoes = parseInt(totalReclamacoes);
-                this.reclamacoes_respondidas = parseInt(reclamacoesRespondidas);
-                this.reclamacoes_avaliadas = parseInt(reclamacoesAvaliadas); // Novo
-                this.resolvidos = (parseFloat(isAtual) / 100) * this.reclamacoes_respondidas;
-                this.soma_notas = parseFloat(maAtual) * this.reclamacoes_avaliadas; // Ajustado
-                this.voltaria_negocio = (parseFloat(inAtual) / 100) * this.reclamacoes_respondidas;
-                this.ir = this.reclamacoes_respondidas === this.total_reclamacoes ? 100 : (this.reclamacoes_respondidas / this.total_reclamacoes) * 100; // Ajuste para definir IR como 100% se as condições forem atendidas
+    
+            iniciarValoresIniciais(reclamacoesAvaliadas, isAtual, maAtual, inAtual) {
+                this.reclamacoes_avaliadas = parseInt(reclamacoesAvaliadas);
+                this.resolvidos = Math.round((parseFloat(isAtual) / 100) * this.reclamacoes_avaliadas);
+                this.soma_notas = Math.round(parseFloat(maAtual) * this.reclamacoes_avaliadas);
+                this.voltaria_negocio = Math.round((parseFloat(inAtual) / 100) * this.reclamacoes_avaliadas);
                 this.calcularIndices();
             }
-
+    
             adicionarAvaliacao(resolvido, nota, voltariaNegocio) {
-                this.reclamacoes_respondidas++;
-                this.reclamacoes_avaliadas++; // Novo
+                const notaInt = parseInt(nota);
+                if (notaInt < 0 || notaInt > 10) {
+                    alert("A nota deve estar entre 0 e 10 (inteiros).");
+                    return;
+                }
+                this.reclamacoes_avaliadas++;
                 if (resolvido === 'Sim') this.resolvidos++;
-                this.soma_notas += parseFloat(nota);
+                this.soma_notas += notaInt;
                 if (voltariaNegocio === 'Sim') this.voltaria_negocio++;
                 this.calcularIndices();
             }
-
+    
             removerAvaliacao(resolvido, nota, voltariaNegocio) {
-                this.reclamacoes_respondidas--;
-                this.reclamacoes_avaliadas--; // Novo
+                const notaInt = parseInt(nota);
+                if (this.reclamacoes_avaliadas === 0) return;
+                this.reclamacoes_avaliadas--;
                 if (resolvido === 'Sim') this.resolvidos--;
-                this.soma_notas -= parseFloat(nota);
+                this.soma_notas -= notaInt;
                 if (voltariaNegocio === 'Sim') this.voltaria_negocio--;
                 this.calcularIndices();
             }
-
+    
             calcularIndices() {
-                const is = (this.resolvidos / this.reclamacoes_respondidas) * 100;
+                const is = (this.resolvidos / this.reclamacoes_avaliadas) * 100;
                 const ma = this.soma_notas / this.reclamacoes_avaliadas;
-                const in_ = (this.voltaria_negocio / this.reclamacoes_respondidas) * 100;
-                // Não ajusta IR aqui, pois seu valor é definido na inicialização
-                const score = ((is * 3) + (ma * 10 * 3) + (in_ * 2) + (this.ir * 2)) / 100; // Usa this.ir no cálculo
-
+                const in_ = (this.voltaria_negocio / this.reclamacoes_avaliadas) * 100;
+                const score = (200 + (ma * 30) + (in_ * 2) + (is * 3)) / 100;
+    
                 document.getElementById('is').innerText = is.toFixed(4) + '%';
-                document.getElementById('ma').innerText = ma.toFixed(4);
+                document.getElementById('ma').innerText = ma.toFixed(5);
                 document.getElementById('in').innerText = in_.toFixed(4) + '%';
-                document.getElementById('ir').innerText = this.ir.toFixed(2) + '%'; // Usa this.ir para exibir
-                document.getElementById('score').innerText = score.toFixed(4);
+                document.getElementById('score').innerText = score.toFixed(5);
             }
         }
-        
-
+    
         window.onload = function() {
             const reclamacaoRA = new ReclamacaoRA();
-
-            document.getElementById('iniciar').addEventListener('click', function() {
-                const totalReclamacoes = document.getElementById('totalReclamacoes').value;
-                const reclamacoesRespondidas = document.getElementById('reclamacoesRespondidas').value;
-                const reclamacoesAvaliadas = document.getElementById('reclamacoesAvaliadas').value; // Novo
+    
+            document.getElementById('iniciar').addEventListener('click', function () {
+                const reclamacoesAvaliadas = document.getElementById('reclamacoesAvaliadas').value;
                 const isAtual = document.getElementById('isAtual').value;
                 const maAtual = document.getElementById('maAtual').value;
                 const inAtual = document.getElementById('inAtual').value;
-
-                reclamacaoRA.iniciarValoresIniciais(totalReclamacoes, reclamacoesRespondidas, reclamacoesAvaliadas, isAtual, maAtual, inAtual);
+    
+                reclamacaoRA.iniciarValoresIniciais(reclamacoesAvaliadas, isAtual, maAtual, inAtual);
             });
-
-            document.getElementById('adicionar').addEventListener('click', function() {
+    
+            document.getElementById('adicionar').addEventListener('click', function () {
                 const resolvido = document.querySelector('input[name="resolvido"]:checked').value;
                 const nota = document.getElementById('nota').value;
                 const voltariaNegocio = document.querySelector('input[name="voltariaNegocio"]:checked').value;
                 reclamacaoRA.adicionarAvaliacao(resolvido, nota, voltariaNegocio);
             });
-
-            document.getElementById('remover').addEventListener('click', function() {
+    
+            document.getElementById('remover').addEventListener('click', function () {
                 const resolvido = document.querySelector('input[name="resolvido"]:checked').value;
                 const nota = document.getElementById('nota').value;
                 const voltariaNegocio = document.querySelector('input[name="voltariaNegocio"]:checked').value;
@@ -142,17 +137,14 @@
             });
         };
     </script>
+    
 </head>
 <body>
     <div class="container">
     <h1>Calculadora de Score RA</h1>
     <div>
-        <label>Total de Reclamações: </label>
-        <input type="number" id="totalReclamacoes" min="0">
-        <label>Reclamações Respondidas: </label>
-        <input type="number" id="reclamacoesRespondidas" min="0">
         <label>Número de Reclamações Avaliadas Atualmente: </label>
-        <input type="number" id="reclamacoesAvaliadas" min="0"> <!-- Novo campo -->
+        <input type="number" id="reclamacoesAvaliadas" min="0">
         <label>IS Atual (%): </label>
         <input type="number" id="isAtual" min="0" max="100" step="0.1">
         <label>MA Atual: </label>
@@ -166,7 +158,7 @@
         <input type="radio" name="resolvido" value="Sim" checked> Sim
         <input type="radio" name="resolvido" value="Não"> Não
         <label>Nota da reclamação: </label>
-        <input type="number" id="nota" min="0" max="10" step="0.1" value="8.1">
+        <input type="number" id="nota" min="0" max="10" step="1" value="8">
         <label>Voltaria a fazer negócio? </label>
         <input type="radio" name="voltariaNegocio" value="Sim" checked> Sim
         <input type="radio" name="voltariaNegocio" value="Não"> Não
@@ -178,7 +170,6 @@
     <div>Índice de Solução (IS): <span id="is">0%</span></div>
     <div>Média das Avaliações (MA): <span id="ma">0</span></div>
     <div>Índice de Negócio (IN): <span id="in">0%</span></div>
-    <div>Índice de Resposta (IR): <span id="ir">0%</span></div>
     <div>Score: <span id="score">0</span></div>
 </div>
 </body>
